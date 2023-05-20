@@ -9,3 +9,23 @@ install_manifest.txt
 compile_commands.json
 CTestTestfile.cmake
 _deps
+
+.idea/
+/packages/
+riderModule.iml
+/_ReSharper.Caches/
+output.bmp
+# Build results
+[Dd]ebug/
+[Dd]ebugPublic/
+[Rr]elease/
+[Rr]eleases/
+build/x64/
+x86/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+[Bb]in/
+[Oo]bj/
+[Ll]og/
+/build/

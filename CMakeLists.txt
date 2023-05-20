@@ -8,7 +8,7 @@ add_executable(opengl-world
         src/main.cpp
         )
 
-set_property(TARGET opengl-world PROPERTY CXX_STANDARD 11)
+set_property(TARGET opengl-world PROPERTY CXX_STANDARD 23)
 target_compile_options(opengl-world PRIVATE -Wall)
 
 set(ONLY_LIBS "ON")
@@ -25,10 +25,6 @@ target_link_libraries(opengl-world
         PRIVATE glm
         )
 
-#configure_file(
-#        ${CMAKE_CURRENT_SOURCE_DIR}/src/asset.hpp.in
-#        ${CMAKE_CURRENT_BINARY_DIR}/src/asset.hpp
-#)
 target_include_directories(opengl-world
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
         PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src
