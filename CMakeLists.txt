@@ -15,9 +15,9 @@ set(ONLY_LIBS "ON")
 set(glew-cmake_BUILD_SHARED "FALSE")
 
 add_definitions(-DGLEW_STATIC)
-add_subdirectory(dependencies/glfw EXCLUDE_FROM_ALL)
-add_subdirectory(dependencies/glew EXCLUDE_FROM_ALL)
-add_subdirectory(dependencies/glm EXCLUDE_FROM_ALL)
+add_subdirectory(external/glfw EXCLUDE_FROM_ALL)
+add_subdirectory(external/glew EXCLUDE_FROM_ALL)
+add_subdirectory(external/glm EXCLUDE_FROM_ALL)
 
 target_link_libraries(opengl-world
         PRIVATE glfw
