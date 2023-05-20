@@ -3,6 +3,10 @@
 
 
 #include <iostream>
+#include <cstdint>
+
+#include "triangle.h"
+#include "shader.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -41,6 +45,16 @@ int main()
         std::cout << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
+
+    Shader shader = Shader("shaders/passthrough.vert", "shaders/passthrough.frag");
+
+    uint32_t vbo;
+    glGenBuffers(1, &vbo);
+
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
+
 
     // render loop
     // -----------
