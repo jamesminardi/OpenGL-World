@@ -6,7 +6,7 @@ project (opengl-world)
 # The main executable
 add_executable(opengl-world
         src/main.cpp
-        src/triangle.h src/shader.cpp src/shader.h)
+        src/triangle.h src/shader.cpp src/shader.h src/camera.h)
 
 set_property(TARGET opengl-world PROPERTY CXX_STANDARD 23)
 target_compile_options(opengl-world PRIVATE -Wall)
