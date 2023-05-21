@@ -149,6 +149,26 @@ public:
     }
 
 private:
+
+    // utility function for checking uniform erros
+    // ------------------------------------------------------------------------
+    void check_uniform_error(GLint error)
+    {
+        switch (error)
+        {
+            case GL_INVALID_VALUE:
+                std::cout << "ERROR::UNIFORM_ERROR of type: " << GL_INVALID_VALUE << "\n"
+                          << "\n -- --------------------------------------------------- -- " << std::endl;
+                break;
+            case GL_INVALID_OPERATION:
+
+                break;
+            default:
+                break;
+        }
+    }
+
+
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
     void check_compile_errors(unsigned int shader, std::string type) {
