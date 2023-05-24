@@ -4,6 +4,10 @@
 
 #pragma once
 
+#ifndef STB_IMAGE_IMPLEMENTATION
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+#endif
 
 float triangle_vertices[] = {
         -0.5f, -0.5f, 0.0f,
