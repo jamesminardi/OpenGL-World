@@ -18,21 +18,18 @@
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
 void APIENTRY message_callback(   GLenum source,
-                         GLenum type,
-                         GLuint id,
-                         GLenum severity,
-                         GLsizei length,
-                         const GLchar* message,
-                         const void* userParam );
+                                  GLenum type,
+                                  GLuint id,
+                                  GLenum severity,
+                                  GLsizei length,
+                                  const GLchar* message,
+                                  const void* userParam );
 
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 2.0f));
-float lastX = SCR_WIDTH / 2.0f;
-float lastY = SCR_HEIGHT / 2.0f;
-bool firstMouse = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -108,8 +105,6 @@ int main()
     glEnableVertexAttribArray(1);
 
     glEnable(GL_DEPTH_TEST);
-//    glDepthFunc(GL_ALWAYS);
-//    glClearDepth(1.0f);
 
     shader.use();
 
@@ -134,32 +129,20 @@ int main()
         shader.use();
 
         // create transformations
-
         glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-//        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 view          = glm::mat4(1.0f);
+        glm::mat4 projection    = glm::mat4(1.0f);
 
-        glm::mat4 view = camera.GetViewMatrix();
-        glm::mat4 projection; //    = glm::mat4(1.0f);
-//        projection = glm::ortho(-2.0f, 2.0f, -2.0f, 2.0f, 0.1f, 100.0f);
-        //model = glm::translate(model, glm::vec3(0.0f, 0.0f, 0.0f));
-        //model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
-//        view  = glm::translate(view, glm::vec3(0.0f, 0.0f, 0.5f));
+        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(0.5f, 1.0f, 0.0f));
+        view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-        // retrieve the matrix uniform locations
 
-        // pass them to the shaders (3 different ways)
         glm::mat4 mvp = projection * view * model;
-        // note: currently we set the projection matrix each frame, but since the projection matrix rarely changes it's often best practice to set it outside the main loop only once.
-        shader.setMat4("mvp", mvp);
 
-        //std::cout << glm::to_string(mvp) << std::endl;
+        shader.setMat4("mvp", mvp);
 
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
-
-        printf("Properties:\n\tPosition(%.2f,%.2f,%.2f)\n",
-               camera.Position.x, camera.Position.y, camera.Position.z);
-
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -204,12 +187,12 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height)
 }
 
 void APIENTRY message_callback(  GLenum source,
-                        GLenum type,
-                        GLuint id,
-                        GLenum severity,
-                        GLsizei length,
-                        const GLchar* message,
-                        const void* userParam )
+                                 GLenum type,
+                                 GLuint id,
+                                 GLenum severity,
+                                 GLsizei length,
+                                 const GLchar* message,
+                                 const void* userParam )
 {
     if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
