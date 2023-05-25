@@ -6,9 +6,9 @@ project (opengl-world)
 # The main executable
 add_executable(opengl-world
         src/main.cpp
-        src/triangle.h src/shader.cpp src/shader.h src/camera.h)
+        src/triangle.h src/shader.cpp src/shader.h src/camera.h external/stb/stb_image.h)
 
-set_property(TARGET opengl-world PROPERTY CXX_STANDARD 23)
+set_property(TARGET opengl-world PROPERTY CXX_STANDARD 17)
 target_compile_options(opengl-world PRIVATE -Wall)
 
 set(ONLY_LIBS "ON")
@@ -28,4 +28,5 @@ target_link_libraries(opengl-world
 target_include_directories(opengl-world
         PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/src
         PRIVATE ${CMAKE_CURRENT_BINARY_DIR}/src
+        PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/external/stb
         )
