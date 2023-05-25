@@ -3,11 +3,11 @@
 
 ## Build with Source
 
-###Requirements:
+### Requirements:
 * [`cmake`](https://cmake.org) 3.10+
 * a modern C++17 compiler (`gcc-8`, `clang-6.0`, `MSVC 2017` or above)
 
-###Setup
+### Setup
 
 
 ##### 1. Cloning the repository
