@@ -124,37 +124,61 @@ int main()
             1.0f, 0.0f,
             1.0f, 0.0f,
             0.0f, 0.0f,
-            0.0f, 1.0f,
+            0.0f, 1.0f
     };
 
     Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
 
+    uint32_t pos_attrib = 0;
+    uint32_t color_attrib = 1;
+    uint32_t texture_attrib = 2;
+    uint32_t normal_attrib = 3;
+
+
     // 1st, bind the vao.
-    uint32_t vao;
-    glGenVertexArrays(1, &vao);
-    glBindVertexArray(vao);
+    uint32_t cube_vao;
+    glCreateVertexArrays(1, &cube_vao);
 
-    // 2nd, bind the vbo and configure if necessary
-    uint32_t vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(0);
+    uint32_t pos_vbo;
+    glCreateBuffers(1, &pos_vbo);
+    glNamedBufferData(pos_vbo, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
 
-    uint32_t color_data;
-    glGenBuffers(1, &color_data);
-    glBindBuffer(GL_ARRAY_BUFFER, color_data);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(cube_color), cube_color, GL_STATIC_DRAW);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(1);
+    uint32_t color_vbo;
+    glCreateBuffers(1, &color_vbo);
+    glNamedBufferData(color_vbo, sizeof(cube_color), cube_color, GL_STATIC_DRAW);
 
-    uint32_t texture_data;
-    glGenBuffers(1, &texture_data);
-    glBindBuffer(GL_ARRAY_BUFFER, texture_data);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(texture_coords), texture_coords, GL_STATIC_DRAW);
-    glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(float), (void*)0);
-    glEnableVertexAttribArray(2);
+    uint32_t texture_vbo;
+    glCreateBuffers(1, &texture_vbo);
+    glNamedBufferData(texture_vbo, sizeof(texture_coords), texture_coords, GL_STATIC_DRAW);
+
+//    uint32_t normal_vbo;
+//    glCreateBuffers(1, &normal_vbo);
+//    glNamedBufferData(color_vbo, sizeof(cube_normal), cube_normal, GL_STATIC_DRAW);
+
+
+    // Enable attributes for cube_vao
+    glEnableVertexArrayAttrib(cube_vao, pos_attrib);
+    glEnableVertexArrayAttrib(cube_vao, color_attrib);
+    glEnableVertexArrayAttrib(cube_vao, texture_attrib);
+//    glEnableVertexArrayAttrib(cube_vao, normal_attrib);
+
+    // Set up formats for cube_vao attributes
+    glVertexArrayAttribFormat(cube_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(cube_vao, color_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(cube_vao, texture_attrib, 2, GL_FLOAT, GL_FALSE, 0);
+//    glVertexArrayAttribFormat(cube_vao, normal_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+
+    // Make attributes use binding 0
+    glVertexArrayAttribBinding(cube_vao, pos_attrib, 0);
+    glVertexArrayAttribBinding(cube_vao, color_attrib, 1);
+    glVertexArrayAttribBinding(cube_vao, texture_attrib, 2);
+//    glVertexArrayAttribBinding(cube_vao, normal_attrib, 3);
+
+    glVertexArrayVertexBuffer(cube_vao, 0, pos_vbo, 0, 3 * sizeof(float));
+    glVertexArrayVertexBuffer(cube_vao, 1, color_vbo, 0, 3 * sizeof(float));
+    glVertexArrayVertexBuffer(cube_vao, 2, texture_vbo, 0, 2 * sizeof(float));
+//    glVertexArrayVertexBuffer(cube_vao, 3, normal_vbo, 0, 3 * sizeof(float));
+
 
     glEnable(GL_DEPTH_TEST);
 
@@ -162,31 +186,31 @@ int main()
 
 
     uint32_t texture;
-    glGenTextures(1, &texture);
-
-    glBindTexture(GL_TEXTURE_2D, texture);
-
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
     // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-//    float border_color[] = { 1.0f, 1.0f, 0.0f, 1.0f};
-//    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
+    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+
+
+    float border_color[] = { 1.0f, 1.0f, 0.0f, 1.0f};
+    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
 
     int width, height, nrChannels;
     uint8_t *data = stbi_load("../../resources/textures/brickwall.jpg", &width, &height, &nrChannels, 0);
     if (data)
     {
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateMipmap(GL_TEXTURE_2D);
+        glTextureStorage2D(texture, 1, GL_RGB8, width, height);
+        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateTextureMipmap(texture);
     }
     else
     {
         std::cout << "Failed to load texture" << std::endl;
     }
 
-    stbi_image_free(data);
+//    stbi_image_free(data);
 
     // render loop
     // -----------
@@ -221,8 +245,8 @@ int main()
 
         shader.setMat4("mvp", mvp);
 
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glBindVertexArray(vao);
+        glBindTextureUnit(0, texture);
+        glBindVertexArray(cube_vao);
         glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
