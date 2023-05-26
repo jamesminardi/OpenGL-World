@@ -32,6 +32,15 @@ const unsigned int SCR_HEIGHT = 600;
 
 Camera camera(glm::vec3(0.0f, 0.0f, 2.0f));
 
+glm::vec3 light_position(-3.0f, 1.5f, 3.0f);
+glm::vec3 light_color(1.0f, 1.0f, 1.0f);
+// Cube only uniforms
+float cube_specular_strength = 1.0f;
+float cube_ambient_strength = 0.6f;
+float cube_diffuse_strength = 0.6f;
+float cube_shininess = 32.0f;
+
+
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
@@ -127,7 +136,10 @@ int main()
             0.0f, 1.0f
     };
 
-    Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
+    Shader shader("../../src/shaders/phong.vert", "../../src/shaders/phong.frag");
+    Shader light_shader("../../src/shaders/light_caster.vert", "../../src/shaders/light_caster.frag");
+
+
 
     uint32_t pos_attrib = 0;
     uint32_t color_attrib = 1;
@@ -138,6 +150,9 @@ int main()
     // 1st, bind the vao.
     uint32_t cube_vao;
     glCreateVertexArrays(1, &cube_vao);
+
+    uint32_t light_vao;
+    glCreateVertexArrays(1, &light_vao);
 
     uint32_t pos_vbo;
     glCreateBuffers(1, &pos_vbo);
@@ -151,33 +166,40 @@ int main()
     glCreateBuffers(1, &texture_vbo);
     glNamedBufferData(texture_vbo, sizeof(texture_coords), texture_coords, GL_STATIC_DRAW);
 
-//    uint32_t normal_vbo;
-//    glCreateBuffers(1, &normal_vbo);
-//    glNamedBufferData(color_vbo, sizeof(cube_normal), cube_normal, GL_STATIC_DRAW);
+    uint32_t normal_vbo;
+    glCreateBuffers(1, &normal_vbo);
+    glNamedBufferData(normal_vbo, sizeof(cube_normal), cube_normal, GL_STATIC_DRAW);
 
 
     // Enable attributes for cube_vao
     glEnableVertexArrayAttrib(cube_vao, pos_attrib);
     glEnableVertexArrayAttrib(cube_vao, color_attrib);
     glEnableVertexArrayAttrib(cube_vao, texture_attrib);
-//    glEnableVertexArrayAttrib(cube_vao, normal_attrib);
+    glEnableVertexArrayAttrib(cube_vao, normal_attrib);
 
     // Set up formats for cube_vao attributes
     glVertexArrayAttribFormat(cube_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribFormat(cube_vao, color_attrib, 3, GL_FLOAT, GL_FALSE, 0);
     glVertexArrayAttribFormat(cube_vao, texture_attrib, 2, GL_FLOAT, GL_FALSE, 0);
-//    glVertexArrayAttribFormat(cube_vao, normal_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(cube_vao, normal_attrib, 3, GL_FLOAT, GL_FALSE, 0);
 
     // Make attributes use binding 0
     glVertexArrayAttribBinding(cube_vao, pos_attrib, 0);
     glVertexArrayAttribBinding(cube_vao, color_attrib, 1);
     glVertexArrayAttribBinding(cube_vao, texture_attrib, 2);
-//    glVertexArrayAttribBinding(cube_vao, normal_attrib, 3);
+    glVertexArrayAttribBinding(cube_vao, normal_attrib, 3);
 
     glVertexArrayVertexBuffer(cube_vao, 0, pos_vbo, 0, 3 * sizeof(float));
     glVertexArrayVertexBuffer(cube_vao, 1, color_vbo, 0, 3 * sizeof(float));
     glVertexArrayVertexBuffer(cube_vao, 2, texture_vbo, 0, 2 * sizeof(float));
-//    glVertexArrayVertexBuffer(cube_vao, 3, normal_vbo, 0, 3 * sizeof(float));
+    glVertexArrayVertexBuffer(cube_vao, 3, normal_vbo, 0, 3 * sizeof(float));
+
+
+    // Light VAO and attributes setup
+    glEnableVertexArrayAttrib(light_vao, pos_attrib);
+    glVertexArrayAttribFormat(light_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(light_vao, pos_attrib, 0);
+    glVertexArrayVertexBuffer(light_vao, 0, pos_vbo, 0, 3 * sizeof(float));
 
 
     glEnable(GL_DEPTH_TEST);
@@ -237,16 +259,44 @@ int main()
         glm::mat4 view          = glm::mat4(1.0f);
         glm::mat4 projection    = glm::mat4(1.0f);
 
-        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
+//        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
 
         glm::mat4 mvp = projection * view * model;
 
-        shader.setMat4("mvp", mvp);
+        shader.setVec3("LightColor", light_color);
+        shader.setVec3("LightPos", light_position);
+        shader.setVec3("ViewPos", camera.Position);
+        shader.setFloat("SpecularStrength", cube_specular_strength);
+        shader.setFloat("AmbientStrength", cube_ambient_strength);
+        shader.setFloat("Shininess", cube_shininess);
+        shader.setFloat("DiffuseStrength", cube_diffuse_strength);
+        shader.setMat4("MVPMatrix", mvp);
+        shader.setMat4("ModelMatrix", model);
 
         glBindTextureUnit(0, texture);
         glBindVertexArray(cube_vao);
+        glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
+
+        // LIGHT
+
+        light_shader.use();
+
+        glm::mat4 light_model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
+        glm::mat4 light_view          = glm::mat4(1.0f);
+        glm::mat4 light_projection    = glm::mat4(1.0f);
+        light_model = glm::scale(light_model, glm::vec3(0.2f));
+        light_model = glm::translate(light_model, light_position);
+        light_view = camera.GetViewMatrix();
+        light_projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+
+        glm::mat4 light_mvp = light_projection * light_view * light_model;
+
+        light_shader.setMat4("mvp", light_mvp);
+        light_shader.setVec3("lightColor", light_color);
+
+        glBindVertexArray(light_vao);
         glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -280,6 +330,28 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         camera.ProcessKeyboard(BACKWARD, deltaTime);
+
+    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
+        light_position.y += 0.25f;
+    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
+        light_position.y -= 0.25f;
+    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
+        light_position.x -= 0.25f;
+    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
+        light_position.x += 0.25f;
+    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
+        light_position.z += 0.25f;
+    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
+        light_position.z -= 0.25f;
+
+    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
+        cube_ambient_strength = std::min(1.0f, cube_ambient_strength + 0.1f);
+    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
+        cube_ambient_strength = std::max(0.0f, cube_ambient_strength - 0.1f);
+    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
+        cube_diffuse_strength = std::min(1.0f, cube_diffuse_strength + 0.1f);
+    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+        cube_diffuse_strength = std::max(0.0f, cube_diffuse_strength - 0.1f);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
@@ -317,7 +389,9 @@ void APIENTRY message_callback(  GLenum source,
 
     switch (type)
     {
-        case GL_DEBUG_TYPE_ERROR:               std::cout << "Type: Error"; break;
+        case GL_DEBUG_TYPE_ERROR:
+            std::cout << "Type: Error";
+            break;
         case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR: std::cout << "Type: Deprecated Behaviour"; break;
         case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:  std::cout << "Type: Undefined Behaviour"; break;
         case GL_DEBUG_TYPE_PORTABILITY:         std::cout << "Type: Portability"; break;
@@ -339,4 +413,8 @@ void APIENTRY message_callback(  GLenum source,
     } std::cout << std::endl;
     std::cout << std::endl;
 
+    if (type == GL_DEBUG_TYPE_ERROR)
+    {
+        system("pause");
+    }
 }
