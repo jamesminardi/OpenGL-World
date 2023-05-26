@@ -1,34 +1,36 @@
 # OpenGL-World
 
+## About
 
-## Build with Source
+### Dependencies
+- [`GLM`](https://github.com/g-truc/glm) (math)
+- [`GLFW`](https://github.com/glfw/glfw) (window creation)
+- [`GEW`](https://github.com/Perlmint/glew-cmake) (OpenGL function loading)
+- [`STB`](https://github.com/nothings/stb) (image loading)
 
-### Requirements:
-* [`cmake`](https://cmake.org) 3.10+
-* a modern C++17 compiler (`gcc-8`, `clang-6.0`, `MSVC 2017` or above)
+(All of these are included)
 
-### Setup
+## Setup
 
+### Build Requirements:
+- [`cmake`](https://cmake.org) 3.10+
+- a modern C++17 compiler (`gcc-8`, `clang-6.0`, `MSVC 2017` or above)
+### To Build
+- Clone this project using git.
+- From the root of this project update all the submodules with `git submodule update --init --recusive`
+- Open the project in an editor that directly supports CMAKE files or follow the command-line instructions below.
+  ```
+  mkdir build/release
+  cd build/release
+  cmake ../../
+  ```
+Use `cmake -G ${GENERATOR} ../../` instead to use a specified platform (i.e. `"Unix Makefiles"`)
 
-##### 1. Cloning the repository
-Project dependencies are git submodules under `external/`.
+## Project Structure
+- `build`: This holds the generated build files and where the final binary applications are put
+- `data`: This is where application images are stored
+- `external`: This is where external dependencies are put. (i.e. git submodules)
+- `src`: This holds the source code for these examples
 
-Use: 
-```
-git clone ...
-git submodule update --init --recursive
-```
-or
-```
-git clone --recurse-submodules ...
-```
-#### 2. CMake
+## Functionality
 
-*Note:* The project currently requires the CMake build to be two directories deep from the top-level directory.
-
-e.g.
-Run CMake under the directory `OpenGL-World/build/cmake-build/`,
-
-`cmake -G "MinGW Makefiles" ../../`
-
-The project can now be built using the resulting makefile in the case of the above example.
