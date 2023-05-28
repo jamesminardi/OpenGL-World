@@ -76,6 +76,7 @@ int main()
         std::cout << "Failed to initialize GLEW" << std::endl;
         return -1;
     }
+    std::cout << "Initialized GLEW" << std::endl;
 
     int32_t flags;
     glGetIntegerv(GL_CONTEXT_FLAGS, &flags);
@@ -92,145 +93,51 @@ int main()
 
     }
 
-    float texture_coords[] = {
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-            1.0f, 1.0f,
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-            1.0f, 1.0f,
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            0.0f, 1.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            0.0f, 1.0f
-    };
-
-    Shader shader("../../src/shaders/phong.vert", "../../src/shaders/phong.frag");
-    Shader light_shader("../../src/shaders/light_caster.vert", "../../src/shaders/light_caster.frag");
-
-
+    Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
+    std::cout << "Loaded Shaders" << std::endl;
 
     uint32_t pos_attrib = 0;
     uint32_t color_attrib = 1;
-    uint32_t texture_attrib = 2;
-    uint32_t normal_attrib = 3;
 
 
     // 1st, bind the vao.
-    uint32_t cube_vao;
-    glCreateVertexArrays(1, &cube_vao);
+    uint32_t vao;
+    glCreateVertexArrays(1, &vao);
 
-    uint32_t light_vao;
-    glCreateVertexArrays(1, &light_vao);
+    uint32_t ibo;
+    glCreateBuffers(1, &ibo);
+    glNamedBufferData(ibo, sizeof(triangle_indices), triangle_indices, GL_STATIC_DRAW);
+
+
 
     uint32_t pos_vbo;
     glCreateBuffers(1, &pos_vbo);
-    glNamedBufferData(pos_vbo, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
+    glNamedBufferData(pos_vbo, sizeof(triangle_vertices), triangle_vertices, GL_STATIC_DRAW);
 
     uint32_t color_vbo;
     glCreateBuffers(1, &color_vbo);
-    glNamedBufferData(color_vbo, sizeof(cube_color), cube_color, GL_STATIC_DRAW);
+    glNamedBufferData(color_vbo, sizeof(triangle_color), triangle_color, GL_STATIC_DRAW);
 
-    uint32_t texture_vbo;
-    glCreateBuffers(1, &texture_vbo);
-    glNamedBufferData(texture_vbo, sizeof(texture_coords), texture_coords, GL_STATIC_DRAW);
-
-    uint32_t normal_vbo;
-    glCreateBuffers(1, &normal_vbo);
-    glNamedBufferData(normal_vbo, sizeof(cube_normal), cube_normal, GL_STATIC_DRAW);
+    glVertexArrayVertexBuffer(vao, 0, pos_vbo, 0, 3 * sizeof(float));
+    glVertexArrayVertexBuffer(vao, 1, color_vbo, 0, 3 * sizeof(float));
 
 
     // Enable attributes for cube_vao
-    glEnableVertexArrayAttrib(cube_vao, pos_attrib);
-    glEnableVertexArrayAttrib(cube_vao, color_attrib);
-    glEnableVertexArrayAttrib(cube_vao, texture_attrib);
-    glEnableVertexArrayAttrib(cube_vao, normal_attrib);
+    glEnableVertexArrayAttrib(vao, pos_attrib);
+    glEnableVertexArrayAttrib(vao, color_attrib);
 
     // Set up formats for cube_vao attributes
-    glVertexArrayAttribFormat(cube_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(cube_vao, color_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(cube_vao, texture_attrib, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(cube_vao, normal_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribFormat(vao, color_attrib, 3, GL_FLOAT, GL_FALSE, 0);
 
     // Make attributes use binding 0
-    glVertexArrayAttribBinding(cube_vao, pos_attrib, 0);
-    glVertexArrayAttribBinding(cube_vao, color_attrib, 1);
-    glVertexArrayAttribBinding(cube_vao, texture_attrib, 2);
-    glVertexArrayAttribBinding(cube_vao, normal_attrib, 3);
+    glVertexArrayAttribBinding(vao, pos_attrib, 0);
+    glVertexArrayAttribBinding(vao, color_attrib, 1);
 
-    glVertexArrayVertexBuffer(cube_vao, 0, pos_vbo, 0, 3 * sizeof(float));
-    glVertexArrayVertexBuffer(cube_vao, 1, color_vbo, 0, 3 * sizeof(float));
-    glVertexArrayVertexBuffer(cube_vao, 2, texture_vbo, 0, 2 * sizeof(float));
-    glVertexArrayVertexBuffer(cube_vao, 3, normal_vbo, 0, 3 * sizeof(float));
-
-
-    // Light VAO and attributes setup
-    glEnableVertexArrayAttrib(light_vao, pos_attrib);
-    glVertexArrayAttribFormat(light_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(light_vao, pos_attrib, 0);
-    glVertexArrayVertexBuffer(light_vao, 0, pos_vbo, 0, 3 * sizeof(float));
-
+    glVertexArrayElementBuffer(vao, ibo);
 
     glEnable(GL_DEPTH_TEST);
 
-    shader.use();
-
-
-    uint32_t texture;
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-    float border_color[] = { 1.0f, 1.0f, 0.0f, 1.0f};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
-
-    int width, height, nrChannels;
-    uint8_t *data = stbi_load("../../resources/textures/brickwall.jpg", &width, &height, &nrChannels, 0);
-    if (data)
-    {
-        glTextureStorage2D(texture, 1, GL_RGB8, width, height);
-        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateTextureMipmap(texture);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
 
 //    stbi_image_free(data);
 
@@ -254,50 +161,10 @@ int main()
 
         shader.use();
 
-        // create transformations
-        glm::mat4 model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 view          = glm::mat4(1.0f);
-        glm::mat4 projection    = glm::mat4(1.0f);
-
-//        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
-        view = camera.GetViewMatrix();
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
-        glm::mat4 mvp = projection * view * model;
-
-        shader.setVec3("LightColor", light_color);
-        shader.setVec3("LightPos", light_position);
-        shader.setVec3("ViewPos", camera.Position);
-        shader.setFloat("SpecularStrength", cube_specular_strength);
-        shader.setFloat("AmbientStrength", cube_ambient_strength);
-        shader.setFloat("Shininess", cube_shininess);
-        shader.setFloat("DiffuseStrength", cube_diffuse_strength);
-        shader.setMat4("MVPMatrix", mvp);
-        shader.setMat4("ModelMatrix", model);
-
-        glBindTextureUnit(0, texture);
-        glBindVertexArray(cube_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
-
-        // LIGHT
-
-        light_shader.use();
-
-        glm::mat4 light_model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 light_view          = glm::mat4(1.0f);
-        glm::mat4 light_projection    = glm::mat4(1.0f);
-        light_model = glm::scale(light_model, glm::vec3(0.2f));
-        light_model = glm::translate(light_model, light_position);
-        light_view = camera.GetViewMatrix();
-        light_projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
-        glm::mat4 light_mvp = light_projection * light_view * light_model;
-
-        light_shader.setMat4("mvp", light_mvp);
-        light_shader.setVec3("lightColor", light_color);
-
-        glBindVertexArray(light_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
+        glBindVertexArray(vao);
+        std::cout << "Drawing Elements" << std::endl;
+        glDrawElements(GL_TRIANGLES, sizeof(triangle_indices)/sizeof(triangle_indices[0]), GL_UNSIGNED_INT, 0);
+//        glDrawArrays(GL_TRIANGLES, 0, 3);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------

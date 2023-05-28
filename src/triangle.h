@@ -15,6 +15,16 @@ float triangle_vertices[] = {
          0.0f,  0.5f, 0.0f,
 };
 
+float triangle_color[] = {
+        0.0f, 1.0f, 0.0f,
+        1.0f, 0.0f, 0.0f,
+        0.0f,  0.0f, 1.0f,
+};
+
+unsigned int triangle_indices[] = {
+        0, 1, 2
+};
+
 float cube_vertices[] = {
         -0.5f, -0.5f, -0.5f,
          0.5f, -0.5f, -0.5f,
