@@ -30,15 +30,8 @@ void APIENTRY message_callback(   GLenum source,
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 2.0f));
+Camera camera(glm::vec3(67.0f, 628.0f, 170.0f));
 
-glm::vec3 light_position(-3.0f, 1.5f, 3.0f);
-glm::vec3 light_color(1.0f, 1.0f, 1.0f);
-// Cube only uniforms
-float cube_specular_strength = 1.0f;
-float cube_ambient_strength = 0.6f;
-float cube_diffuse_strength = 0.6f;
-float cube_shininess = 32.0f;
 
 
 // timing
@@ -92,147 +85,88 @@ int main()
 
     }
 
-    float texture_coords[] = {
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-            1.0f, 1.0f,
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-            1.0f, 1.0f,
-            0.0f, 1.0f,
-            0.0f, 0.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            1.0f, 0.0f,
-            1.0f, 1.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            0.0f, 1.0f,
-
-            0.0f, 1.0f,
-            1.0f, 1.0f,
-            1.0f, 0.0f,
-            1.0f, 0.0f,
-            0.0f, 0.0f,
-            0.0f, 1.0f
-    };
-
-    Shader shader("../../src/shaders/phong.vert", "../../src/shaders/phong.frag");
-    Shader light_shader("../../src/shaders/light_caster.vert", "../../src/shaders/light_caster.frag");
-
-
-
-    uint32_t pos_attrib = 0;
-    uint32_t color_attrib = 1;
-    uint32_t texture_attrib = 2;
-    uint32_t normal_attrib = 3;
-
-
-    // 1st, bind the vao.
-    uint32_t cube_vao;
-    glCreateVertexArrays(1, &cube_vao);
-
-    uint32_t light_vao;
-    glCreateVertexArrays(1, &light_vao);
-
-    uint32_t pos_vbo;
-    glCreateBuffers(1, &pos_vbo);
-    glNamedBufferData(pos_vbo, sizeof(cube_vertices), cube_vertices, GL_STATIC_DRAW);
-
-    uint32_t color_vbo;
-    glCreateBuffers(1, &color_vbo);
-    glNamedBufferData(color_vbo, sizeof(cube_color), cube_color, GL_STATIC_DRAW);
-
-    uint32_t texture_vbo;
-    glCreateBuffers(1, &texture_vbo);
-    glNamedBufferData(texture_vbo, sizeof(texture_coords), texture_coords, GL_STATIC_DRAW);
-
-    uint32_t normal_vbo;
-    glCreateBuffers(1, &normal_vbo);
-    glNamedBufferData(normal_vbo, sizeof(cube_normal), cube_normal, GL_STATIC_DRAW);
-
-
-    // Enable attributes for cube_vao
-    glEnableVertexArrayAttrib(cube_vao, pos_attrib);
-    glEnableVertexArrayAttrib(cube_vao, color_attrib);
-    glEnableVertexArrayAttrib(cube_vao, texture_attrib);
-    glEnableVertexArrayAttrib(cube_vao, normal_attrib);
-
-    // Set up formats for cube_vao attributes
-    glVertexArrayAttribFormat(cube_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(cube_vao, color_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(cube_vao, texture_attrib, 2, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribFormat(cube_vao, normal_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-
-    // Make attributes use binding 0
-    glVertexArrayAttribBinding(cube_vao, pos_attrib, 0);
-    glVertexArrayAttribBinding(cube_vao, color_attrib, 1);
-    glVertexArrayAttribBinding(cube_vao, texture_attrib, 2);
-    glVertexArrayAttribBinding(cube_vao, normal_attrib, 3);
-
-    glVertexArrayVertexBuffer(cube_vao, 0, pos_vbo, 0, 3 * sizeof(float));
-    glVertexArrayVertexBuffer(cube_vao, 1, color_vbo, 0, 3 * sizeof(float));
-    glVertexArrayVertexBuffer(cube_vao, 2, texture_vbo, 0, 2 * sizeof(float));
-    glVertexArrayVertexBuffer(cube_vao, 3, normal_vbo, 0, 3 * sizeof(float));
-
-
-    // Light VAO and attributes setup
-    glEnableVertexArrayAttrib(light_vao, pos_attrib);
-    glVertexArrayAttribFormat(light_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(light_vao, pos_attrib, 0);
-    glVertexArrayVertexBuffer(light_vao, 0, pos_vbo, 0, 3 * sizeof(float));
-
-
     glEnable(GL_DEPTH_TEST);
 
-    shader.use();
+    Shader shader("../../src/shaders/cpu_terrain.vert", "../../src/shaders/cpu_terrain.frag");
 
-
-    uint32_t texture;
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    // set the texture wrapping/filtering options (on the currently bound texture object)
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-
-    float border_color[] = { 1.0f, 1.0f, 0.0f, 1.0f};
-    glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, border_color);
-
-    int width, height, nrChannels;
-    uint8_t *data = stbi_load("../../resources/textures/brickwall.jpg", &width, &height, &nrChannels, 0);
+    int width, height, num_channels;
+    uint8_t *data = stbi_load("../../resources/textures/iceland_heightmap.png", &width, &height, &num_channels, 0);
     if (data)
     {
-        glTextureStorage2D(texture, 1, GL_RGB8, width, height);
-        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGB, GL_UNSIGNED_BYTE, data);
-        glGenerateTextureMipmap(texture);
+        std::cout << "Loaded heightmap of size " << height << " x " << width << std::endl;
     }
     else
     {
         std::cout << "Failed to load texture" << std::endl;
     }
 
-//    stbi_image_free(data);
+    // Generate mesh vertices based on height map
+    std::vector<float> vertices;
+    float y_scale = 64.0f / 256.0f;
+    float y_shift = 16.0f; // Apply a scale and shift to the height data
+    uint32_t bytes_per_pixel = num_channels;
+    int rez = 1;
+
+    for( uint32_t i =  0; i < height; i++)
+    {
+        for (uint32_t j = 0; j < width; j++)
+        {
+            // Retrieve texel for (i,j) texture coord
+            uint8_t* pixel_offset = data + (width * i + j) * num_channels;
+
+            // Raw height at coordinate
+            uint8_t y = pixel_offset[0];
+
+            // Vertex
+            vertices.push_back( -height/2.0f + height*i/(float)height );       // v.x
+            vertices.push_back( (int)y * y_scale - y_shift);// v.y
+            vertices.push_back( -width / 2.0f + width*j/(float)width );       // v.z
+        }
+    }
+    std::cout << "Loaded " << vertices.size() / 3 << " vertices" << std::endl;
+    stbi_image_free(data);
+
+    // index generation
+    std::vector<unsigned int> indices;
+    for(uint32_t i = 0; i < height-1; i+=rez)       // for each row a.k.a. each strip
+    {
+        for(uint32_t j = 0; j < width; j+=rez)      // for each column
+        {
+            for(uint32_t k = 0; k < 2; k++)      // for each side of the strip
+            {
+                indices.push_back(j + width * (i + k*rez));
+            }
+        }
+    }
+    std::cout << "Loaded " << indices.size() << " indices" << std::endl;
+
+    const uint32_t num_strips = (height - 1)/rez;
+    const uint32_t num_tris_per_strip = (width/rez)*2 - 2;
+    std::cout << "Created lattice of " << num_strips << " strips with " << num_tris_per_strip - 2 << " triangles each" << std::endl;
+    std::cout << "Created " << num_strips * num_tris_per_strip << " triangles total" << std::endl;
+
+    // Set up VAO
+    uint32_t terrain_vao;
+    uint32_t terrain_vbo;
+    uint32_t terrain_ebo;
+    uint32_t pos_attrib = 0;
+
+    glCreateVertexArrays(1, &terrain_vao);
+    glCreateBuffers(1, &terrain_vbo);
+    glCreateBuffers(1, &terrain_ebo);
+
+    glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
+
+
+    glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
+    glVertexArrayAttribFormat(terrain_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+    glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
+    glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
+
+    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+
+    shader.use();
 
     // render loop
     // -----------
@@ -265,39 +199,13 @@ int main()
 
         glm::mat4 mvp = projection * view * model;
 
-        shader.setVec3("LightColor", light_color);
-        shader.setVec3("LightPos", light_position);
-        shader.setVec3("ViewPos", camera.Position);
-        shader.setFloat("SpecularStrength", cube_specular_strength);
-        shader.setFloat("AmbientStrength", cube_ambient_strength);
-        shader.setFloat("Shininess", cube_shininess);
-        shader.setFloat("DiffuseStrength", cube_diffuse_strength);
-        shader.setMat4("MVPMatrix", mvp);
-        shader.setMat4("ModelMatrix", model);
+        shader.setMat4("mvp", mvp);
 
-        glBindTextureUnit(0, texture);
-        glBindVertexArray(cube_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
-
-        // LIGHT
-
-        light_shader.use();
-
-        glm::mat4 light_model         = glm::mat4(1.0f); // make sure to initialize matrix to identity matrix first
-        glm::mat4 light_view          = glm::mat4(1.0f);
-        glm::mat4 light_projection    = glm::mat4(1.0f);
-        light_model = glm::scale(light_model, glm::vec3(0.2f));
-        light_model = glm::translate(light_model, light_position);
-        light_view = camera.GetViewMatrix();
-        light_projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
-
-        glm::mat4 light_mvp = light_projection * light_view * light_model;
-
-        light_shader.setMat4("mvp", light_mvp);
-        light_shader.setVec3("lightColor", light_color);
-
-        glBindVertexArray(light_vao);
-        glDrawArrays(GL_TRIANGLES, 0, 3 * 12);
+        glBindVertexArray(terrain_vao);
+        for(unsigned int strip = 0; strip < num_strips; ++strip)
+        {
+            glDrawElements(GL_TRIANGLE_STRIP, num_vertices_per_strip, GL_UNSIGNED_INT, (void*)(sizeof(uint32_t) * num_vertices_per_strip * strip));
+        }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -331,27 +239,6 @@ void processInput(GLFWwindow *window)
     if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
         camera.ProcessKeyboard(BACKWARD, deltaTime);
 
-    if (glfwGetKey(window, GLFW_KEY_I) == GLFW_PRESS)
-        light_position.y += 0.25f;
-    if (glfwGetKey(window, GLFW_KEY_K) == GLFW_PRESS)
-        light_position.y -= 0.25f;
-    if (glfwGetKey(window, GLFW_KEY_J) == GLFW_PRESS)
-        light_position.x -= 0.25f;
-    if (glfwGetKey(window, GLFW_KEY_L) == GLFW_PRESS)
-        light_position.x += 0.25f;
-    if (glfwGetKey(window, GLFW_KEY_O) == GLFW_PRESS)
-        light_position.z += 0.25f;
-    if (glfwGetKey(window, GLFW_KEY_U) == GLFW_PRESS)
-        light_position.z -= 0.25f;
-
-    if (glfwGetKey(window, GLFW_KEY_R) == GLFW_PRESS)
-        cube_ambient_strength = std::min(1.0f, cube_ambient_strength + 0.1f);
-    if (glfwGetKey(window, GLFW_KEY_F) == GLFW_PRESS)
-        cube_ambient_strength = std::max(0.0f, cube_ambient_strength - 0.1f);
-    if (glfwGetKey(window, GLFW_KEY_T) == GLFW_PRESS)
-        cube_diffuse_strength = std::min(1.0f, cube_diffuse_strength + 0.1f);
-    if (glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
-        cube_diffuse_strength = std::max(0.0f, cube_diffuse_strength - 0.1f);
 }
 
 // glfw: whenever the window size changed (by OS or user resize) this callback function executes
