@@ -18,6 +18,8 @@
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int modifiers);
+void mouse_callback(GLFWwindow* window, double xpos, double ypos);
 void APIENTRY message_callback(   GLenum source,
                                   GLenum type,
                                   GLuint id,
@@ -29,10 +31,14 @@ void APIENTRY message_callback(   GLenum source,
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+int use_wireframe = 0;
+int display_grayscale = 0;
 
-Camera camera(glm::vec3(67.0f, 628.0f, 170.0f));
+Camera camera(glm::vec3(0.0f, 150.0f, 0.0f));
 
-
+float last_x = SCR_WIDTH / 2.0f;
+float last_y = SCR_HEIGHT / 2.0f;
+bool first_mouse = true;
 
 // timing
 float deltaTime = 0.0f;
@@ -60,6 +66,11 @@ int main()
     }
     glfwMakeContextCurrent(window);
     glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetKeyCallback(window, key_callback);
+    glfwSetCursorPosCallback(window, mouse_callback);
+
+    // tell GLFW to capture our mouse
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // glew: load all OpenGL function pointers
     // ---------------------------------------
@@ -87,6 +98,7 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
+
     Shader shader("../../src/shaders/cpu_terrain.vert", "../../src/shaders/cpu_terrain.frag");
 
     int width, height, num_channels;
@@ -103,9 +115,9 @@ int main()
     // Generate mesh vertices based on height map
     std::vector<float> vertices;
     float y_scale = 64.0f / 256.0f;
-    float y_shift = 16.0f; // Apply a scale and shift to the height data
+    float y_shift = 0.0f; // Apply a scale and shift to the height data (16.0)
     uint32_t bytes_per_pixel = num_channels;
-    int rez = 1;
+    int rez = 4;
 
     for( uint32_t i =  0; i < height; i++)
     {
@@ -195,16 +207,16 @@ int main()
 
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
         view = camera.GetViewMatrix();
-        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100.0f);
+        projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100000.0f);
 
         glm::mat4 mvp = projection * view * model;
 
         shader.setMat4("mvp", mvp);
 
         glBindVertexArray(terrain_vao);
-        for(unsigned int strip = 0; strip < num_strips; ++strip)
+        for(unsigned int strip = 0; strip < num_strips; strip++)
         {
-            glDrawElements(GL_TRIANGLE_STRIP, num_vertices_per_strip, GL_UNSIGNED_INT, (void*)(sizeof(uint32_t) * num_vertices_per_strip * strip));
+            glDrawElements(GL_TRIANGLE_STRIP, num_tris_per_strip+2, GL_UNSIGNED_INT, (void*)(sizeof(uint32_t) * (num_tris_per_strip+2) * strip));
         }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
@@ -223,21 +235,17 @@ int main()
 // ---------------------------------------------------------------------------------------------------------
 void processInput(GLFWwindow *window)
 {
-    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
         glfwSetWindowShouldClose(window, true);
 
     if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-        camera.ProcessKeyboard(UP, deltaTime);
+        camera.ProcessKeyboard(FORWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-        camera.ProcessKeyboard(DOWN, deltaTime);
+        camera.ProcessKeyboard(BACKWARD, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
-        camera.ProcessKeyboard(FORWARD, deltaTime);
-    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
-        camera.ProcessKeyboard(BACKWARD, deltaTime);
 
 }
 
@@ -304,4 +312,51 @@ void APIENTRY message_callback(  GLenum source,
     {
         system("pause");
     }
+}
+
+// glfw: whenever a key event occurs, this callback is called
+// ---------------------------------------------------------------------------------------------
+void key_callback(GLFWwindow* window, int key, int scancode, int action, int modifiers)
+{
+    if(action == GLFW_PRESS)
+    {
+        switch(key)
+        {
+            case GLFW_KEY_SPACE:
+                use_wireframe = 1 - use_wireframe;
+                if (use_wireframe) {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+                } else {
+                    glPolygonMode(GL_FRONT_AND_BACK, GL_FILL );
+                }
+                break;
+            case GLFW_KEY_G:
+                display_grayscale = 1 - display_grayscale;
+                break;
+            case GLFW_KEY_P:
+                std::cout << "Position: " << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << std::endl;
+            default:
+                break;
+        }
+    }
+}
+
+// glfw: whenever the mouse moves, this callback is called
+// -------------------------------------------------------
+void mouse_callback(GLFWwindow* window, double xpos, double ypos)
+{
+    if (first_mouse)
+    {
+        last_x = xpos;
+        last_y = ypos;
+        first_mouse = false;
+    }
+
+    float x_offset = xpos - last_x;
+    float y_offset = last_y - ypos; // reversed since y-coordinates go from bottom to top
+
+    last_x = xpos;
+    last_y = ypos;
+
+    camera.ProcessMouseMovement(x_offset, y_offset);
 }
