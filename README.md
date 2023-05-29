@@ -1,6 +1,7 @@
 # OpenGL-World
 
 ## About
+A living OpenGL project for me to build upon during my free time. Initially developed alongside chapters from [_learnopengl.com_](https://learnopengl.com/). "Releases" may be completely unrelated to one another and not necessarily be a linear path of development.
 
 ### Dependencies
 - [`GLM`](https://github.com/g-truc/glm) (math)
@@ -56,6 +57,4 @@ Light Source
 - `O`/`U`: Move light source forward and backward
 - `R`/`F`: Increase and decrease ambient light strength
 - `T`/`G`: Increase and decrease diffused light strength
-
-
 
