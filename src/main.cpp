@@ -31,6 +31,7 @@ void APIENTRY message_callback(   GLenum source,
 // settings
 const unsigned int SCR_WIDTH = 800;
 const unsigned int SCR_HEIGHT = 600;
+const unsigned int NUM_PATCH_PTS = 4;
 int use_wireframe = 0;
 int display_grayscale = 0;
 
@@ -112,27 +113,43 @@ int main()
         std::cout << "Failed to load texture" << std::endl;
     }
 
+
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
+
     // Generate mesh vertices based on height map
     std::vector<float> vertices;
     float y_scale = 64.0f / 256.0f;
     float y_shift = 0.0f; // Apply a scale and shift to the height data (16.0)
     uint32_t bytes_per_pixel = num_channels;
-    int rez = 4;
 
-    for( uint32_t i =  0; i < height; i++)
+    uint32_t rez = 20;
+    for(unsigned i = 0; i <= rez-1; i++)
     {
-        for (uint32_t j = 0; j < width; j++)
+        for(unsigned j = 0; j <= rez-1; j++)
         {
-            // Retrieve texel for (i,j) texture coord
-            uint8_t* pixel_offset = data + (width * i + j) * num_channels;
+            vertices.push_back(-width/2.0f + width*i/(float)rez); // v.x
+            vertices.push_back(0.0f); // v.y
+            vertices.push_back(-height/2.0f + height*j/(float)rez); // v.z
+            vertices.push_back(i / (float)rez); // u
+            vertices.push_back(j / (float)rez); // v
 
-            // Raw height at coordinate
-            uint8_t y = pixel_offset[0];
+            vertices.push_back(-width/2.0f + width*(i+1)/(float)rez); // v.x
+            vertices.push_back(0.0f); // v.y
+            vertices.push_back(-height/2.0f + height*j/(float)rez); // v.z
+            vertices.push_back((i+1) / (float)rez); // u
+            vertices.push_back(j / (float)rez); // v
 
-            // Vertex
-            vertices.push_back( -height/2.0f + height*i/(float)height );       // v.x
-            vertices.push_back( (int)y * y_scale - y_shift);// v.y
-            vertices.push_back( -width / 2.0f + width*j/(float)width );       // v.z
+            vertices.push_back(-width/2.0f + width*i/(float)rez); // v.x
+            vertices.push_back(0.0f); // v.y
+            vertices.push_back(-height/2.0f + height*(j+1)/(float)rez); // v.z
+            vertices.push_back(i / (float)rez); // u
+            vertices.push_back((j+1) / (float)rez); // v
+
+            vertices.push_back(-width/2.0f + width*(i+1)/(float)rez); // v.x
+            vertices.push_back(0.0f); // v.y
+            vertices.push_back(-height/2.0f + height*(j+1)/(float)rez); // v.z
+            vertices.push_back((i+1) / (float)rez); // u
+            vertices.push_back((j+1) / (float)rez); // v
         }
     }
     std::cout << "Loaded " << vertices.size() / 3 << " vertices" << std::endl;
@@ -214,10 +231,11 @@ int main()
         shader.setMat4("mvp", mvp);
 
         glBindVertexArray(terrain_vao);
-        for(unsigned int strip = 0; strip < num_strips; strip++)
-        {
-            glDrawElements(GL_TRIANGLE_STRIP, num_tris_per_strip+2, GL_UNSIGNED_INT, (void*)(sizeof(uint32_t) * (num_tris_per_strip+2) * strip));
-        }
+        glDrawArrays(GL_PATCHES, 0, 4*rez*rez);
+//        for(unsigned int strip = 0; strip < num_strips; strip++)
+//        {
+//            glDrawElements(GL_TRIANGLE_STRIP, num_tris_per_strip+2, GL_UNSIGNED_INT, (void*)(sizeof(uint32_t) * (num_tris_per_strip+2) * strip));
+//        }
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -246,6 +264,10 @@ void processInput(GLFWwindow *window)
         camera.ProcessKeyboard(LEFT, deltaTime);
     if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         camera.ProcessKeyboard(RIGHT, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_Q) == GLFW_PRESS)
+        camera.ProcessKeyboard(DOWN, deltaTime);
+    if (glfwGetKey(window, GLFW_KEY_E) == GLFW_PRESS)
+        camera.ProcessKeyboard(UP, deltaTime);
 
 }
 

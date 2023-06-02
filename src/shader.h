@@ -18,15 +18,32 @@ public:
 
     // constructor generates the shader on the fly
     // ------------------------------------------------------------------------
-    Shader(const char *vertex_path, const char *fragment_path) {
+    Shader(const char *vertex_path, const char *fragment_path, const char* geometry_path = nullptr, const char* tess_control_path = nullptr, const char* tess_eval_path = nullptr) {
         // 1. retrieve the vertex/fragment source code from filePath
         std::string vertex_code;
-        std::string fragment_code;
         std::ifstream v_shader_file;
+
+        std::string fragment_code;
         std::ifstream f_shader_file;
+
+        std::string geometry_code;
+        std::ifstream g_shader_file;
+
+        std::string tess_control_code;
+        std::ifstream tc_shader_file;
+
+        std::string tess_eval_code;
+        std::ifstream te_shader_file;
+
+
+
         // ensure ifstream objects can throw exceptions:
         v_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
         f_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        g_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        tc_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+        te_shader_file.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+
         try {
             // open files
             v_shader_file.open(vertex_path);
@@ -57,6 +74,47 @@ public:
             std::cout << "ERROR::FRAGMENT_SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
         }
 
+        if (geometry_path != nullptr)
+        {
+            try {
+                g_shader_file.open(geometry_path);
+                std::stringstream g_shader_stream;
+                g_shader_stream << g_shader_file.rdbuf();
+                g_shader_file.close();
+                geometry_code = g_shader_stream.str();
+            }
+            catch (std::ifstream::failure &e) {
+                std::cout << "ERROR::GEOMETRY_SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
+            }
+        }
+
+        if (tess_control_path != nullptr) {
+            try {
+                tc_shader_file.open(tess_control_path);
+                std::stringstream tc_shader_stream;
+                tc_shader_stream << tc_shader_file.rdbuf();
+                tc_shader_file.close();
+                tess_control_code = tc_shader_stream.str();
+            }
+            catch (std::ifstream::failure &e) {
+                std::cout << "ERROR::TESS_CONTROL_SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
+            }
+        }
+
+        if (tess_eval_path != nullptr) {
+            try {
+                te_shader_file.open(tess_eval_path);
+                std::stringstream te_shader_stream;
+                te_shader_stream << te_shader_file.rdbuf();
+                te_shader_file.close();
+                tess_eval_code = te_shader_stream.str();
+            }
+            catch (std::ifstream::failure &e) {
+                std::cout << "ERROR::TESS_EVAL_SHADER::FILE_NOT_SUCCESSFULLY_READ: " << e.what() << std::endl;
+            }
+        }
+
+
 
         const char *v_shader_code = vertex_code.c_str();
         const char *f_shader_code = fragment_code.c_str();
@@ -72,6 +130,36 @@ public:
         glShaderSource(fragment, 1, &f_shader_code, NULL);
         glCompileShader(fragment);
         check_compile_errors(fragment, "FRAGMENT");
+
+        unsigned int geometry;
+        if(geometry_path != nullptr)
+        {
+            const char * g_shader_code = geometry_code.c_str();
+            geometry = glCreateShader(GL_GEOMETRY_SHADER);
+            glShaderSource(geometry, 1, &g_shader_code, NULL);
+            glCompileShader(geometry);
+            check_compile_errors(geometry, "GEOMETRY");
+        }
+        // if tessellation shader is given, compile tessellation shader
+        unsigned int tess_control;
+        if(tess_control_path != nullptr)
+        {
+            const char * tc_shader_code = tess_control_code.c_str();
+            tess_control = glCreateShader(GL_TESS_CONTROL_SHADER);
+            glShaderSource(tess_control, 1, &tc_shader_code, NULL);
+            glCompileShader(tess_control);
+            check_compile_errors(tess_control, "TESS_CONTROL");
+        }
+        unsigned int tess_eval;
+        if(tess_eval_path != nullptr)
+        {
+            const char * teShaderCode = tess_eval_code.c_str();
+            tess_eval = glCreateShader(GL_TESS_EVALUATION_SHADER);
+            glShaderSource(tess_eval, 1, &teShaderCode, NULL);
+            glCompileShader(tess_eval);
+            check_compile_errors(tess_eval, "TESS_EVALUATION");
+        }
+
         // shader Program
         id = glCreateProgram();
         glAttachShader(id, vertex);
@@ -81,6 +169,9 @@ public:
         // delete the shaders as they're linked into our program now and no longer necessary
         glDeleteShader(vertex);
         glDeleteShader(fragment);
+        if (geometry_path) glDeleteShader(geometry);
+        if (tess_control_path) glDeleteShader(tess_control);
+        if (tess_eval_path)  glDeleteShader(tess_eval);
     }
 
     // activate the shader
@@ -149,25 +240,6 @@ public:
     }
 
 private:
-
-    // utility function for checking uniform erros
-    // ------------------------------------------------------------------------
-    void check_uniform_error(GLint error)
-    {
-        switch (error)
-        {
-            case GL_INVALID_VALUE:
-                std::cout << "ERROR::UNIFORM_ERROR of type: " << GL_INVALID_VALUE << "\n"
-                          << "\n -- --------------------------------------------------- -- " << std::endl;
-                break;
-            case GL_INVALID_OPERATION:
-
-                break;
-            default:
-                break;
-        }
-    }
-
 
     // utility function for checking shader compilation/linking errors.
     // ------------------------------------------------------------------------
