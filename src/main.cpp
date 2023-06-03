@@ -100,21 +100,41 @@ int main()
     glEnable(GL_DEPTH_TEST);
 
 
-    Shader shader("../../src/shaders/cpu_terrain.vert", "../../src/shaders/cpu_terrain.frag");
+    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
+                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
+    shader.use();
+    // Load and create texture heightmap
+    uint32_t texture;
+    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int width, height, num_channels;
     uint8_t *data = stbi_load("../../resources/textures/iceland_heightmap.png", &width, &height, &num_channels, 0);
     if (data)
     {
         std::cout << "Loaded heightmap of size " << height << " x " << width << std::endl;
+//        glTextureStorage2D(texture, 1, GL_RGB, width, height);
+//        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        glBindTexture(GL_TEXTURE_2D, texture);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+        std::cout << "setting subimage " << std::endl;
+
+        glGenerateTextureMipmap(texture);
+        shader.setInt("heightMap", 0);
     }
     else
     {
         std::cout << "Failed to load texture" << std::endl;
     }
+    stbi_image_free(data);
 
+    int max_tess_level;
+    glGetIntegerv(GL_MAX_TESS_GEN_LEVEL, &max_tess_level);
+    std::cout << "Max available tess level: " << max_tess_level << std::endl;
 
-    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
     // Generate mesh vertices based on height map
     std::vector<float> vertices;
@@ -152,40 +172,41 @@ int main()
             vertices.push_back((j+1) / (float)rez); // v
         }
     }
-    std::cout << "Loaded " << vertices.size() / 3 << " vertices" << std::endl;
-    stbi_image_free(data);
+//    std::cout << "Loaded " << vertices.size() / 3 << " vertices" << std::endl;
+    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
+    std::cout << "Processing " << rez*rez*4 << " vertices in vertex shader" << std::endl;
 
     // index generation
-    std::vector<unsigned int> indices;
-    for(uint32_t i = 0; i < height-1; i+=rez)       // for each row a.k.a. each strip
-    {
-        for(uint32_t j = 0; j < width; j+=rez)      // for each column
-        {
-            for(uint32_t k = 0; k < 2; k++)      // for each side of the strip
-            {
-                indices.push_back(j + width * (i + k*rez));
-            }
-        }
-    }
-    std::cout << "Loaded " << indices.size() << " indices" << std::endl;
+//    std::vector<unsigned int> indices;
+//    for(uint32_t i = 0; i < height-1; i+=rez)       // for each row a.k.a. each strip
+//    {
+//        for(uint32_t j = 0; j < width; j+=rez)      // for each column
+//        {
+//            for(uint32_t k = 0; k < 2; k++)      // for each side of the strip
+//            {
+//                indices.push_back(j + width * (i + k*rez));
+//            }
+//        }
+//    }
+//    std::cout << "Loaded " << indices.size() << " indices" << std::endl;
 
-    const uint32_t num_strips = (height - 1)/rez;
-    const uint32_t num_tris_per_strip = (width/rez)*2 - 2;
-    std::cout << "Created lattice of " << num_strips << " strips with " << num_tris_per_strip - 2 << " triangles each" << std::endl;
-    std::cout << "Created " << num_strips * num_tris_per_strip << " triangles total" << std::endl;
+//    const uint32_t num_strips = (height - 1)/rez;
+//    const uint32_t num_tris_per_strip = (width/rez)*2 - 2;
+//    std::cout << "Created lattice of " << num_strips << " strips with " << num_tris_per_strip - 2 << " triangles each" << std::endl;
+//    std::cout << "Created " << num_strips * num_tris_per_strip << " triangles total" << std::endl;
 
     // Set up VAO
     uint32_t terrain_vao;
     uint32_t terrain_vbo;
-    uint32_t terrain_ebo;
+//    uint32_t terrain_ebo;
     uint32_t pos_attrib = 0;
 
     glCreateVertexArrays(1, &terrain_vao);
     glCreateBuffers(1, &terrain_vbo);
-    glCreateBuffers(1, &terrain_ebo);
+//    glCreateBuffers(1, &terrain_ebo);
 
     glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
+//    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 
 
     glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
@@ -193,7 +214,10 @@ int main()
     glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
     glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
 
-    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+//    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
+
+
 
     shader.use();
 
@@ -228,10 +252,12 @@ int main()
 
         glm::mat4 mvp = projection * view * model;
 
-        shader.setMat4("mvp", mvp);
+        shader.setMat4("model", model);
+        shader.setMat4("view", view);
+        shader.setMat4("projection", projection);
 
         glBindVertexArray(terrain_vao);
-        glDrawArrays(GL_PATCHES, 0, 4*rez*rez);
+        glDrawArrays(GL_PATCHES, 0, NUM_PATCH_PTS*rez*rez);
 //        for(unsigned int strip = 0; strip < num_strips; strip++)
 //        {
 //            glDrawElements(GL_TRIANGLE_STRIP, num_tris_per_strip+2, GL_UNSIGNED_INT, (void*)(sizeof(uint32_t) * (num_tris_per_strip+2) * strip));
@@ -332,7 +358,7 @@ void APIENTRY message_callback(  GLenum source,
 
     if (type == GL_DEBUG_TYPE_ERROR)
     {
-        system("pause");
+//        system("pause");
     }
 }
 
