@@ -153,22 +153,28 @@ int main()
         for(uint32_t j = 0; j <= width; j++)
         {
             vertices.emplace_back(j, 0.0f, i);
-        }
-    }
+		}
+	}
     std::cout << "Loaded " << vertices.size() << " vertices, expected " << (width+1) * (height+1) << std::endl;
 //    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
 //    std::cout << "Processing " << rez*rez*4 << " vertices in vertex shader" << std::endl;
 
-//     index generation
+//	index generation
     std::vector<unsigned int> indices;
-    for(uint32_t i = 0; i < height-1; i+=1)       // for each row
+    for(uint32_t i = 0; i < height-1; i+=1)		// for each row
     {
-        for(uint32_t j = 0; j < width; j+=1)      // for each column
+        for(uint32_t j = 0; j < width; j+=1)	// for each column
         {
-            for(uint32_t k = 0; k < 2; k++)      // for each side of the strip
-            {
-                indices.push_back(j + width * (i + k));
-            }
+			// Starting vertex for the current quad
+			uint32_t tri_start_vertex = ((width+1)*i) + j;			//  1		.
+			indices.push_back(tri_start_vertex);					// | \		.
+			indices.push_back(tri_start_vertex + (width+1) );		// |  \		.
+			indices.push_back(tri_start_vertex + (width+1) + 1);	// 2---3	.
+
+																	// 1---2
+			indices.push_back(tri_start_vertex);					//  \  |
+			indices.push_back(tri_start_vertex + 1);				//   \ |
+			indices.push_back(tri_start_vertex + (width+1) + 1);	//    3
         }
     }
     std::cout << "Loaded " << indices.size() << " indices" << std::endl;
