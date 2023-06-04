@@ -112,24 +112,24 @@ int main()
 //    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int width, height, num_channels;
-    uint8_t *data = stbi_load("../../resources/textures/iceland_heightmap.png", &width, &height, &num_channels, 0);
-    if (data)
-    {
-        std::cout << "Loaded heightmap of size " << height << " x " << width << std::endl;
-//        glTextureStorage2D(texture, 1, GL_RGB, width, height);
-//        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-//        glBindTexture(GL_TEXTURE_2D, texture);
-//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        std::cout << "setting subimage " << std::endl;
-
-//        glGenerateTextureMipmap(texture);
-//        shader.setInt("heightMap", 0);
-    }
-    else
-    {
-        std::cout << "Failed to load texture" << std::endl;
-    }
-    stbi_image_free(data);
+//    uint8_t *data = stbi_load("../../resources/textures/iceland_heightmap.png", &width, &height, &num_channels, 0);
+//    if (data)
+//    {
+//        std::cout << "Loaded heightmap of size " << height << " x " << width << std::endl;
+////        glTextureStorage2D(texture, 1, GL_RGB, width, height);
+////        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
+////        glBindTexture(GL_TEXTURE_2D, texture);
+////        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+//        std::cout << "setting subimage " << std::endl;
+//
+////        glGenerateTextureMipmap(texture);
+////        shader.setInt("heightMap", 0);
+//    }
+//    else
+//    {
+//        std::cout << "Failed to load texture" << std::endl;
+//    }
+//    stbi_image_free(data);
 
 //    int max_tess_level;
 //    glGetIntegerv(GL_MAX_TESS_GEN_LEVEL, &max_tess_level);
@@ -137,14 +137,14 @@ int main()
 
 
     // Generate mesh vertices based on height map
-    std::vector<glm::vec3> vertices;
+    std::vector<float> vertices;
     float y_scale = 64.0f / 256.0f;
     float y_shift = 0.0f; // Apply a scale and shift to the height data (16.0)
     uint32_t bytes_per_pixel = num_channels;
 
-    width = 2;
-    height = 2;
-    vertices.resize(width*height);
+    width = 4;
+    height = 4;
+    //vertices.resize(width*height);
 
 
     uint32_t rez = 1;
@@ -152,18 +152,20 @@ int main()
     {
         for(uint32_t j = 0; j <= width; j++)
         {
-            vertices.emplace_back(j, 0.0f, i);
+            vertices.push_back(j);
+			vertices.push_back(0.0f);
+			vertices.push_back(i);
 		}
 	}
-    std::cout << "Loaded " << vertices.size() << " vertices, expected " << (width+1) * (height+1) << std::endl;
+    std::cout << "Loaded " << vertices.size() / 3 << " vertices, expected " << (width+1) * (height+1) << std::endl;
 //    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
 //    std::cout << "Processing " << rez*rez*4 << " vertices in vertex shader" << std::endl;
 
 //	index generation
     std::vector<unsigned int> indices;
-    for(uint32_t i = 0; i < height-1; i+=1)		// for each row
+    for(uint32_t i = 0; i < height; i++)		// for each row
     {
-        for(uint32_t j = 0; j < width; j+=1)	// for each column
+        for(uint32_t j = 0; j < width; j++)	// for each column
         {
 			// Starting vertex for the current quad
 			uint32_t tri_start_vertex = ((width+1)*i) + j;			//  1		.
@@ -177,7 +179,7 @@ int main()
 			indices.push_back(tri_start_vertex + (width+1) + 1);	//    3
         }
     }
-    std::cout << "Loaded " << indices.size() << " indices" << std::endl;
+    std::cout << "Loaded " << indices.size() << " indices, expected " << width * height * 2 * 3 << std::endl;
 
 //    const uint32_t num_strips = (height - 1)/rez;
 //    const uint32_t num_tris_per_strip = (width/rez)*2 - 2;
@@ -192,18 +194,18 @@ int main()
 
     glCreateVertexArrays(1, &terrain_vao);
     glCreateBuffers(1, &terrain_vbo);
-    glCreateBuffers(1, &terrain_ebo);
-
-    glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
-
-
-    glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
-    glVertexArrayAttribFormat(terrain_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
-    glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
-    glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
-
-    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+//    glCreateBuffers(1, &terrain_ebo);
+//
+//    glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
+//    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
+//
+//
+//    glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
+//    glVertexArrayAttribFormat(terrain_vao, pos_attrib, 3, GL_FLOAT, GL_FALSE, 0);
+//    glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
+//    glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
+//
+//    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
 //    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 
