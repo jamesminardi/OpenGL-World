@@ -99,9 +99,9 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-
-    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
-                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
+    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag");
+//    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
+//                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
     shader.use();
     // Load and create texture heightmap
 //    uint32_t texture;
@@ -131,9 +131,9 @@ int main()
     }
     stbi_image_free(data);
 
-    int max_tess_level;
-    glGetIntegerv(GL_MAX_TESS_GEN_LEVEL, &max_tess_level);
-    std::cout << "Max available tess level: " << max_tess_level << std::endl;
+//    int max_tess_level;
+//    glGetIntegerv(GL_MAX_TESS_GEN_LEVEL, &max_tess_level);
+//    std::cout << "Max available tess level: " << max_tess_level << std::endl;
 
 
     // Generate mesh vertices based on height map
@@ -148,16 +148,16 @@ int main()
 
 
     uint32_t rez = 1;
-    for(unsigned i = 0; i <= height; i++)
+    for(uint32_t i = 0; i <= height; i++)
     {
-        for(unsigned j = 0; j <= width; j++)
+        for(uint32_t j = 0; j <= width; j++)
         {
             vertices.emplace_back(j, 0.0f, i);
         }
     }
-//    std::cout << "Loaded " << vertices.size() / 3 << " vertices" << std::endl;
-    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
-    std::cout << "Processing " << rez*rez*4 << " vertices in vertex shader" << std::endl;
+    std::cout << "Loaded " << vertices.size() << " vertices, expected " << (width+1) * (height+1) << std::endl;
+//    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
+//    std::cout << "Processing " << rez*rez*4 << " vertices in vertex shader" << std::endl;
 
 //     index generation
     std::vector<unsigned int> indices;
