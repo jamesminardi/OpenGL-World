@@ -35,7 +35,7 @@ const unsigned int NUM_PATCH_PTS = 4;
 int use_wireframe = 0;
 int display_grayscale = 0;
 
-Camera camera(glm::vec3(0.0f, 150.0f, 0.0f));
+Camera camera(glm::vec3(0.0f, 5.0f, 0.0f));
 
 float last_x = SCR_WIDTH / 2.0f;
 float last_y = SCR_HEIGHT / 2.0f;
@@ -104,12 +104,12 @@ int main()
                   nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
     shader.use();
     // Load and create texture heightmap
-    uint32_t texture;
-    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
-    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
-    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+//    uint32_t texture;
+//    glCreateTextures(GL_TEXTURE_2D, 1, &texture);
+//    glTextureParameteri(texture, GL_TEXTURE_WRAP_S, GL_REPEAT);
+//    glTextureParameteri(texture, GL_TEXTURE_WRAP_T, GL_REPEAT);
+//    glTextureParameteri(texture, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
+//    glTextureParameteri(texture, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
     int width, height, num_channels;
     uint8_t *data = stbi_load("../../resources/textures/iceland_heightmap.png", &width, &height, &num_channels, 0);
@@ -118,12 +118,12 @@ int main()
         std::cout << "Loaded heightmap of size " << height << " x " << width << std::endl;
 //        glTextureStorage2D(texture, 1, GL_RGB, width, height);
 //        glTextureSubImage2D(texture, 0, 0, 0, width, height, GL_RGBA, GL_UNSIGNED_BYTE, data);
-        glBindTexture(GL_TEXTURE_2D, texture);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
+//        glBindTexture(GL_TEXTURE_2D, texture);
+//        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, data);
         std::cout << "setting subimage " << std::endl;
 
-        glGenerateTextureMipmap(texture);
-        shader.setInt("heightMap", 0);
+//        glGenerateTextureMipmap(texture);
+//        shader.setInt("heightMap", 0);
     }
     else
     {
@@ -137,58 +137,41 @@ int main()
 
 
     // Generate mesh vertices based on height map
-    std::vector<float> vertices;
+    std::vector<glm::vec3> vertices;
     float y_scale = 64.0f / 256.0f;
     float y_shift = 0.0f; // Apply a scale and shift to the height data (16.0)
     uint32_t bytes_per_pixel = num_channels;
 
-    uint32_t rez = 20;
-    for(unsigned i = 0; i <= rez-1; i++)
+    width = 2;
+    height = 2;
+    vertices.resize(width*height);
+
+
+    uint32_t rez = 1;
+    for(unsigned i = 0; i <= height; i++)
     {
-        for(unsigned j = 0; j <= rez-1; j++)
+        for(unsigned j = 0; j <= width; j++)
         {
-            vertices.push_back(-width/2.0f + width*i/(float)rez); // v.x
-            vertices.push_back(0.0f); // v.y
-            vertices.push_back(-height/2.0f + height*j/(float)rez); // v.z
-            vertices.push_back(i / (float)rez); // u
-            vertices.push_back(j / (float)rez); // v
-
-            vertices.push_back(-width/2.0f + width*(i+1)/(float)rez); // v.x
-            vertices.push_back(0.0f); // v.y
-            vertices.push_back(-height/2.0f + height*j/(float)rez); // v.z
-            vertices.push_back((i+1) / (float)rez); // u
-            vertices.push_back(j / (float)rez); // v
-
-            vertices.push_back(-width/2.0f + width*i/(float)rez); // v.x
-            vertices.push_back(0.0f); // v.y
-            vertices.push_back(-height/2.0f + height*(j+1)/(float)rez); // v.z
-            vertices.push_back(i / (float)rez); // u
-            vertices.push_back((j+1) / (float)rez); // v
-
-            vertices.push_back(-width/2.0f + width*(i+1)/(float)rez); // v.x
-            vertices.push_back(0.0f); // v.y
-            vertices.push_back(-height/2.0f + height*(j+1)/(float)rez); // v.z
-            vertices.push_back((i+1) / (float)rez); // u
-            vertices.push_back((j+1) / (float)rez); // v
+            vertices.emplace_back(j, 0.0f, i);
         }
     }
 //    std::cout << "Loaded " << vertices.size() / 3 << " vertices" << std::endl;
     std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
     std::cout << "Processing " << rez*rez*4 << " vertices in vertex shader" << std::endl;
 
-    // index generation
-//    std::vector<unsigned int> indices;
-//    for(uint32_t i = 0; i < height-1; i+=rez)       // for each row a.k.a. each strip
-//    {
-//        for(uint32_t j = 0; j < width; j+=rez)      // for each column
-//        {
-//            for(uint32_t k = 0; k < 2; k++)      // for each side of the strip
-//            {
-//                indices.push_back(j + width * (i + k*rez));
-//            }
-//        }
-//    }
-//    std::cout << "Loaded " << indices.size() << " indices" << std::endl;
+//     index generation
+    std::vector<unsigned int> indices;
+    for(uint32_t i = 0; i < height-1; i+=1)       // for each row
+    {
+        for(uint32_t j = 0; j < width; j+=1)      // for each column
+        {
+            for(uint32_t k = 0; k < 2; k++)      // for each side of the strip
+            {
+                indices.push_back(j + width * (i + k));
+            }
+        }
+    }
+    std::cout << "Loaded " << indices.size() << " indices" << std::endl;
 
 //    const uint32_t num_strips = (height - 1)/rez;
 //    const uint32_t num_tris_per_strip = (width/rez)*2 - 2;
@@ -203,10 +186,10 @@ int main()
 
     glCreateVertexArrays(1, &terrain_vao);
     glCreateBuffers(1, &terrain_vbo);
-//    glCreateBuffers(1, &terrain_ebo);
+    glCreateBuffers(1, &terrain_ebo);
 
     glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-//    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
+    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 
 
     glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
@@ -214,8 +197,8 @@ int main()
     glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
     glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
 
-//    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
-    glPatchParameteri(GL_PATCH_VERTICES, 4);
+    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+//    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 
 
