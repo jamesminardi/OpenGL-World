@@ -36,7 +36,7 @@ const unsigned int NUM_PATCH_PTS = 4;
 int use_wireframe = 0;
 int display_grayscale = 0;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 10.0f));
 
 float last_x = SCR_WIDTH / 2.0f;
 float last_y = SCR_HEIGHT / 2.0f;
@@ -142,8 +142,8 @@ int main()
 	float y_shift = 0.0f; // Apply a scale and shift to the height data (16.0)
 	uint32_t bytes_per_pixel = num_channels;
 
-	width = 16;
-	height = 16;
+	width = 1;
+	height = 1;
 
 
 	std::vector<float> vertices;
@@ -152,8 +152,8 @@ int main()
         for(uint32_t j = 0; j <= width; j++)
         {
             vertices.push_back(j);
-			vertices.push_back(i);
 			vertices.push_back(0.0f);
+			vertices.push_back(i);
 		}
 	}
 
@@ -240,7 +240,8 @@ int main()
         glm::mat4 projection    = glm::mat4(1.0f);
 
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(-width/2.0f, -height/2.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(8.0f));
+		model = glm::translate(model, glm::vec3(-width/2.0f, 0.0f, -height/2.0f));
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100000.0f);
 
