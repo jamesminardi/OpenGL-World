@@ -164,6 +164,9 @@ public:
         id = glCreateProgram();
         glAttachShader(id, vertex);
         glAttachShader(id, fragment);
+        if (geometry_path) glAttachShader(id, geometry);
+        if (tess_control_path) glAttachShader(id, tess_control);
+        if (tess_eval_path) glAttachShader(id, tess_eval);
         glLinkProgram(id);
         check_compile_errors(id, "PROGRAM");
         // delete the shaders as they're linked into our program now and no longer necessary

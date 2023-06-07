@@ -100,9 +100,9 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
-//    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
-//                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
+//    Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
+    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
+                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
     shader.use();
     // Load and create texture heightmap
 //    uint32_t texture;
@@ -145,17 +145,21 @@ int main()
 	width = 1;
 	height = 1;
 
-
-	std::vector<float> vertices;
-    for(uint32_t i = 0; i <= height; i++)
-    {
-        for(uint32_t j = 0; j <= width; j++)
-        {
-            vertices.push_back(j);
-			vertices.push_back(0.0f);
-			vertices.push_back(i);
-		}
-	}
+    uint32_t rez = 2;
+    std::vector<float> vertices = {
+            -0.5f, 0.0f, -0.5f,
+            0.0f, 0.0f, 0.5f,
+            0.5f, 0.0f, -0.5f,
+    };
+//    for(uint32_t i = 0; i <= rez-1; i++)
+//    {
+//        for(uint32_t j = 0; j <= rez-1; j++)
+//        {
+//            vertices.push_back(j);
+//			vertices.push_back(0.0f);
+//			vertices.push_back(i);
+//		}
+//	}
 
     std::cout << "Loaded " << vertices.size() / 3 << " vertices, expected " << (width+1) * (height+1) << std::endl;
 //    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
@@ -174,9 +178,9 @@ int main()
 			indices.push_back(tri_start_vertex + (width+1) + 1);	// 2---3	.
 
 																	// 1---3
-			indices.push_back(tri_start_vertex);					//  \  |
-			indices.push_back(tri_start_vertex + (width+1) + 1);	//   \ |
-			indices.push_back(tri_start_vertex + (width+1));		//    2
+//			indices.push_back(tri_start_vertex);					//  \  |
+//			indices.push_back(tri_start_vertex + (width+1) + 1);	//   \ |
+//			indices.push_back(tri_start_vertex + (width+1));		//    2
         }
     }
     std::cout << "Loaded " << indices.size() << " indices, expected " << width * height * 2 * 3 << std::endl;
@@ -189,15 +193,15 @@ int main()
     // Set up VAO
     uint32_t terrain_vao;
     uint32_t terrain_vbo;
-    uint32_t terrain_ebo;
+//    uint32_t terrain_ebo;
     uint32_t pos_attrib = 0;
 
     glCreateVertexArrays(1, &terrain_vao);
     glCreateBuffers(1, &terrain_vbo);
-    glCreateBuffers(1, &terrain_ebo);
+//    glCreateBuffers(1, &terrain_ebo);
 
     glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
+//    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 
 
     glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
@@ -205,8 +209,8 @@ int main()
     glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
     glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
 
-    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
-//    glPatchParameteri(GL_PATCH_VERTICES, 4);
+//    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+    glPatchParameteri(GL_PATCH_VERTICES, 3);
 
 
 
@@ -240,22 +244,22 @@ int main()
         glm::mat4 projection    = glm::mat4(1.0f);
 
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
-        model = glm::scale(model, glm::vec3(8.0f));
-		model = glm::translate(model, glm::vec3(-width/2.0f, 0.0f, -height/2.0f));
+        //model = glm::scale(model, glm::vec3(8.0f));
+		//model = glm::translate(model, glm::vec3(-width/2.0f, 0.0f, -height/2.0f));
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100000.0f);
 
         glm::mat4 mvp = projection * view * model;
 
-//        shader.setMat4("model", model);
-//        shader.setMat4("view", view);
-//        shader.setMat4("projection", projection);
+        shader.setMat4("model", model);
+        shader.setMat4("view", view);
+        shader.setMat4("projection", projection);
 
-		shader.setMat4("mvp", mvp);
+//		shader.setMat4("mvp", mvp);
 
         glBindVertexArray(terrain_vao);
-        glDrawElements(GL_TRIANGLES, (width * height * 2) * 3, GL_UNSIGNED_INT, 0);
-
+//        glDrawElements(GL_TRIANGLES, (width * height * 2) * 3, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_PATCHES, 0, 4*rez*rez);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
