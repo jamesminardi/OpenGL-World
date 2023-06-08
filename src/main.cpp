@@ -46,6 +46,11 @@ bool first_mouse = true;
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
 
+
+float tessLevelOuter = 1.0f;
+float tessLevelInner = 1.0f;
+
+
 int main()
 {
     // glfw: initialize and configure
@@ -147,9 +152,10 @@ int main()
 
     uint32_t rez = 2;
     std::vector<float> vertices = {
-            -0.5f, 0.0f, -0.5f,
-            0.0f, 0.0f, 0.5f,
-            0.5f, 0.0f, -0.5f,
+            0.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f,
     };
 //    for(uint32_t i = 0; i <= rez-1; i++)
 //    {
@@ -210,7 +216,7 @@ int main()
     glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
 
 //    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
-    glPatchParameteri(GL_PATCH_VERTICES, 3);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 
 
@@ -244,7 +250,7 @@ int main()
         glm::mat4 projection    = glm::mat4(1.0f);
 
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
-        //model = glm::scale(model, glm::vec3(8.0f));
+        model = glm::scale(model, glm::vec3(8.0f, 0.0f, 8.0f));
 		//model = glm::translate(model, glm::vec3(-width/2.0f, 0.0f, -height/2.0f));
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100000.0f);
@@ -254,7 +260,8 @@ int main()
         shader.setMat4("model", model);
         shader.setMat4("view", view);
         shader.setMat4("projection", projection);
-
+        shader.setFloat("tessLevelOuter", tessLevelOuter);
+        shader.setFloat("tessLevelInner", tessLevelInner);
 //		shader.setMat4("mvp", mvp);
 
         glBindVertexArray(terrain_vao);
@@ -383,6 +390,23 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 std::cout << "Position: " << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << std::endl;
             default:
                 break;
+            case GLFW_KEY_I:
+                tessLevelInner = tessLevelInner + 1.0f;
+                std::cout << "Inner (times to divide side) = " << tessLevelInner << std::endl;
+                break;
+            case GLFW_KEY_K:
+                tessLevelInner = fmax(0.0f, tessLevelInner - 1.0);
+                std::cout << "Inner (times to divide side) = " << tessLevelInner << std::endl;
+                break;
+            case GLFW_KEY_O:
+                tessLevelOuter = tessLevelOuter + 1.0f;
+                std::cout << "Outer (times to divide side) = " << tessLevelOuter << std::endl;
+                break;
+            case GLFW_KEY_L:
+                tessLevelOuter = fmax(0.0f, tessLevelOuter - 1.0);
+                std::cout << "Outer (times to divide side) = " << tessLevelOuter << std::endl;
+                break;
+
         }
     }
 }

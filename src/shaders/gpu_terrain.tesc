@@ -1,20 +1,24 @@
 #version 460 core
 
-layout(vertices=3) out;
+layout(vertices=4) out;
+
+in vec4 vPos[];
+out vec4 tcPos[];
 
 uniform mat4 model;
 uniform mat4 view;
 
-
-in vec3 vPos[];
-
-out vec3 tPos[];
 //in vec2 TexCoord[];
 //out vec2 TextureCoord[];
 
+uniform float tessLevelInner = 4.0; // controlled by keyboard buttons
+uniform float tessLevelOuter = 4.0; // controlled by keyboard buttons
+
 void main()
 {
+    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 //    TextureCoord[gl_InvocationID] = TexCoord[gl_InvocationID];
+    tcPos[gl_InvocationID] = vPos[gl_InvocationID];
 
     if(gl_InvocationID == 0)
     {
@@ -39,16 +43,12 @@ void main()
 //        float tessLevel2 = mix( MAX_TESS_LEVEL, MIN_TESS_LEVEL, min(distance01, distance11) );
 //        float tessLevel3 = mix( MAX_TESS_LEVEL, MIN_TESS_LEVEL, min(distance11, distance10) );
 
-        gl_TessLevelOuter[0] = 1.0;
-        gl_TessLevelOuter[1] = 1.0;
-        gl_TessLevelOuter[2] = 1.0;
-//        gl_TessLevelOuter[3] = 5.0;
+        gl_TessLevelOuter[0] = tessLevelOuter;
+        gl_TessLevelOuter[1] = tessLevelOuter;
+        gl_TessLevelOuter[2] = tessLevelOuter;
+        gl_TessLevelOuter[3] = tessLevelOuter;
 
-        gl_TessLevelInner[0] = 1.0;
-        //gl_TessLevelInner[1] = 5.0;
+        gl_TessLevelInner[0] = tessLevelInner;
+        gl_TessLevelInner[1] = tessLevelInner;
     }
-    gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
-
-    tPos[gl_InvocationID] = vPos[gl_InvocationID];
-
 }
