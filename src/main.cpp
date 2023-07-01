@@ -36,7 +36,7 @@ const unsigned int NUM_PATCH_PTS = 4;
 int use_wireframe = 0;
 int display_grayscale = 0;
 
-Camera camera(glm::vec3(0.0f, 0.0f, 5.0f));
+Camera camera(glm::vec3(0.0f, 2.0f, 10.0f));
 
 float last_x = SCR_WIDTH / 2.0f;
 float last_y = SCR_HEIGHT / 2.0f;
@@ -45,6 +45,11 @@ bool first_mouse = true;
 // timing
 float deltaTime = 0.0f;
 float lastFrame = 0.0f;
+
+
+float tessLevelOuter = 1.0f;
+float tessLevelInner = 1.0f;
+
 
 int main()
 {
@@ -100,9 +105,9 @@ int main()
 
     glEnable(GL_DEPTH_TEST);
 
-    Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
-//    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
-//                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
+//    Shader shader("../../src/shaders/passthrough.vert", "../../src/shaders/passthrough.frag");
+    Shader shader("../../src/shaders/gpu_terrain.vert", "../../src/shaders/gpu_terrain.frag",
+                  nullptr, "../../src/shaders/gpu_terrain.tesc", "../../src/shaders/gpu_terrain.tese");
     shader.use();
     // Load and create texture heightmap
 //    uint32_t texture;
@@ -142,20 +147,25 @@ int main()
 	float y_shift = 0.0f; // Apply a scale and shift to the height data (16.0)
 	uint32_t bytes_per_pixel = num_channels;
 
-	width = 16;
-	height = 16;
+	width = 1;
+	height = 1;
 
-
-	std::vector<float> vertices;
-    for(uint32_t i = 0; i <= height; i++)
-    {
-        for(uint32_t j = 0; j <= width; j++)
-        {
-            vertices.push_back(j);
-			vertices.push_back(i);
-			vertices.push_back(0.0f);
-		}
-	}
+    uint32_t rez = 2;
+    std::vector<float> vertices = {
+            0.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f,
+    };
+//    for(uint32_t i = 0; i <= rez-1; i++)
+//    {
+//        for(uint32_t j = 0; j <= rez-1; j++)
+//        {
+//            vertices.push_back(j);
+//			vertices.push_back(0.0f);
+//			vertices.push_back(i);
+//		}
+//	}
 
     std::cout << "Loaded " << vertices.size() / 3 << " vertices, expected " << (width+1) * (height+1) << std::endl;
 //    std::cout << "Loaded " << rez*rez << " patches of 4 control points each" << std::endl;
@@ -174,9 +184,9 @@ int main()
 			indices.push_back(tri_start_vertex + (width+1) + 1);	// 2---3	.
 
 																	// 1---3
-			indices.push_back(tri_start_vertex);					//  \  |
-			indices.push_back(tri_start_vertex + (width+1) + 1);	//   \ |
-			indices.push_back(tri_start_vertex + (width+1));		//    2
+//			indices.push_back(tri_start_vertex);					//  \  |
+//			indices.push_back(tri_start_vertex + (width+1) + 1);	//   \ |
+//			indices.push_back(tri_start_vertex + (width+1));		//    2
         }
     }
     std::cout << "Loaded " << indices.size() << " indices, expected " << width * height * 2 * 3 << std::endl;
@@ -189,15 +199,15 @@ int main()
     // Set up VAO
     uint32_t terrain_vao;
     uint32_t terrain_vbo;
-    uint32_t terrain_ebo;
+//    uint32_t terrain_ebo;
     uint32_t pos_attrib = 0;
 
     glCreateVertexArrays(1, &terrain_vao);
     glCreateBuffers(1, &terrain_vbo);
-    glCreateBuffers(1, &terrain_ebo);
+//    glCreateBuffers(1, &terrain_ebo);
 
     glNamedBufferData(terrain_vbo, vertices.size() * sizeof(float), &vertices[0], GL_STATIC_DRAW);
-    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
+//    glNamedBufferData(terrain_ebo, indices.size() * sizeof(uint32_t), &indices[0], GL_STATIC_DRAW);
 
 
     glEnableVertexArrayAttrib(terrain_vao, pos_attrib);
@@ -205,8 +215,8 @@ int main()
     glVertexArrayAttribBinding(terrain_vao, pos_attrib, 0);
     glVertexArrayVertexBuffer(terrain_vao, 0, terrain_vbo, 0, 3 * sizeof(float));
 
-    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
-//    glPatchParameteri(GL_PATCH_VERTICES, 4);
+//    glVertexArrayElementBuffer(terrain_vao, terrain_ebo);
+    glPatchParameteri(GL_PATCH_VERTICES, 4);
 
 
 
@@ -240,21 +250,23 @@ int main()
         glm::mat4 projection    = glm::mat4(1.0f);
 
 //        model = glm::rotate(model, (float)glfwGetTime(), glm::vec3(1.0f, 1.0f, 0.0f));
-		model = glm::translate(model, glm::vec3(-width/2.0f, -height/2.0f, 0.0f));
+        model = glm::scale(model, glm::vec3(8.0f, 0.0f, 8.0f));
+		//model = glm::translate(model, glm::vec3(-width/2.0f, 0.0f, -height/2.0f));
         view = camera.GetViewMatrix();
         projection = glm::perspective(glm::radians(camera.Zoom), (float)SCR_WIDTH / (float)SCR_HEIGHT, 0.1f, 100000.0f);
 
         glm::mat4 mvp = projection * view * model;
 
-//        shader.setMat4("model", model);
-//        shader.setMat4("view", view);
-//        shader.setMat4("projection", projection);
-
-		shader.setMat4("mvp", mvp);
+        shader.setMat4("model", model);
+        shader.setMat4("view", view);
+        shader.setMat4("projection", projection);
+        shader.setFloat("tessLevelOuter", tessLevelOuter);
+        shader.setFloat("tessLevelInner", tessLevelInner);
+//		shader.setMat4("mvp", mvp);
 
         glBindVertexArray(terrain_vao);
-        glDrawElements(GL_TRIANGLES, (width * height * 2) * 3, GL_UNSIGNED_INT, 0);
-
+//        glDrawElements(GL_TRIANGLES, (width * height * 2) * 3, GL_UNSIGNED_INT, 0);
+        glDrawArrays(GL_PATCHES, 0, 4*rez*rez);
 
         // glfw: swap buffers and poll IO events (keys pressed/released, mouse moved etc.)
         // -------------------------------------------------------------------------------
@@ -378,6 +390,23 @@ void key_callback(GLFWwindow* window, int key, int scancode, int action, int mod
                 std::cout << "Position: " << camera.Position.x << ", " << camera.Position.y << ", " << camera.Position.z << std::endl;
             default:
                 break;
+            case GLFW_KEY_I:
+                tessLevelInner = tessLevelInner + 1.0f;
+                std::cout << "Inner (times to divide side) = " << tessLevelInner << std::endl;
+                break;
+            case GLFW_KEY_K:
+                tessLevelInner = fmax(0.0f, tessLevelInner - 1.0);
+                std::cout << "Inner (times to divide side) = " << tessLevelInner << std::endl;
+                break;
+            case GLFW_KEY_O:
+                tessLevelOuter = tessLevelOuter + 1.0f;
+                std::cout << "Outer (times to divide side) = " << tessLevelOuter << std::endl;
+                break;
+            case GLFW_KEY_L:
+                tessLevelOuter = fmax(0.0f, tessLevelOuter - 1.0);
+                std::cout << "Outer (times to divide side) = " << tessLevelOuter << std::endl;
+                break;
+
         }
     }
 }

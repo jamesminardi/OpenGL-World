@@ -2,19 +2,26 @@
 
 layout(vertices=4) out;
 
+in vec4 vPos[];
+out vec4 tcPos[];
+
 uniform mat4 model;
 uniform mat4 view;
 
 //in vec2 TexCoord[];
 //out vec2 TextureCoord[];
 
+uniform float tessLevelInner = 4.0; // controlled by keyboard buttons
+uniform float tessLevelOuter = 4.0; // controlled by keyboard buttons
+
 void main()
 {
     gl_out[gl_InvocationID].gl_Position = gl_in[gl_InvocationID].gl_Position;
 //    TextureCoord[gl_InvocationID] = TexCoord[gl_InvocationID];
-//
-//    if(gl_InvocationID == 0)
-//    {
+    tcPos[gl_InvocationID] = vPos[gl_InvocationID];
+
+    if(gl_InvocationID == 0)
+    {
 //        const float MIN_TESS_LEVEL = 4.0;
 //        const float MAX_TESS_LEVEL = 64.0;
 //        const float MIN_DISTANCE = 20;
@@ -35,13 +42,13 @@ void main()
 //        float tessLevel1 = mix( MAX_TESS_LEVEL, MIN_TESS_LEVEL, min(distance00, distance01) );
 //        float tessLevel2 = mix( MAX_TESS_LEVEL, MIN_TESS_LEVEL, min(distance01, distance11) );
 //        float tessLevel3 = mix( MAX_TESS_LEVEL, MIN_TESS_LEVEL, min(distance11, distance10) );
-//
-//        gl_TessLevelOuter[0] = tessLevel0;
-//        gl_TessLevelOuter[1] = tessLevel1;
-//        gl_TessLevelOuter[2] = tessLevel2;
-//        gl_TessLevelOuter[3] = tessLevel3;
-//
-//        gl_TessLevelInner[0] = max(tessLevel1, tessLevel3);
-//        gl_TessLevelInner[1] = max(tessLevel0, tessLevel2);
-//    }
+
+        gl_TessLevelOuter[0] = tessLevelOuter;
+        gl_TessLevelOuter[1] = tessLevelOuter;
+        gl_TessLevelOuter[2] = tessLevelOuter;
+        gl_TessLevelOuter[3] = tessLevelOuter;
+
+        gl_TessLevelInner[0] = tessLevelInner;
+        gl_TessLevelInner[1] = tessLevelInner;
+    }
 }
