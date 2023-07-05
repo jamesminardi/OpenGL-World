@@ -15,6 +15,7 @@
 #include "triangle.h"
 #include "shader.h"
 #include "camera.h"
+#include "Game.h"
 
 void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow *window);
@@ -47,6 +48,12 @@ float lastFrame = 0.0f;
 
 int main()
 {
+
+    Game game = Game();
+
+    game.run();
+
+
     // glfw: initialize and configure
     // ------------------------------
     glfwInit();

@@ -6,5 +6,5 @@
 class Game {
 
 public:
-	void run();
+    [[noreturn]] void run();
 };

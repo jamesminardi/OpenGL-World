@@ -25,13 +25,13 @@
 class Logger {
 public:
 	virtual ~Logger() {}
-	virtual void logMsg(std::string& msg) = 0;
+	virtual void logMsg(std::string msg) = 0;
 };
 
 class NullLogger : public Logger
 {
 public:
-	void logMsg(std::string& msg) override
+	void logMsg(std::string msg) override
 	{
 		// Do nothing
 	}
@@ -40,7 +40,7 @@ public:
 class ConsoleLogger : public Logger
 {
 public:
-	void logMsg(std::string& msg) override
+	void logMsg(std::string msg) override
 	{
 		// Log to console
 		std::cout << msg << "\n";

@@ -1,12 +1,18 @@
 #include "Game.h"
+#include "Log.h"
 
-uint16_t target_fps = 144;
-std::chrono::microseconds us_per_update((int64_t)(1.0/target_fps * 1000000));
-
-void Game::run()
+[[noreturn]] void Game::run()
 {
+    Locator::init();
+
+    auto consoleLogger = ConsoleLogger();
+    Locator::provide(&consoleLogger);
+
+    Logger& logger = Locator::getLogger();
 
 
+
+    std::chrono::microseconds us_per_update((int64_t)(1.0/144 * 1000000)); // target 144 fps
 
 	auto previous_time = std::chrono::steady_clock::now();
 	std::chrono::microseconds lag{0};
@@ -20,15 +26,17 @@ void Game::run()
 		lag += elapsed_us;
 
 		// process_input()
+        logger.logMsg("Process Input");
 
 		// Fixed update time step with variable rendering.
 		while (lag >= us_per_update)
 		{
 			// update(elapsed_seconds);
+            logger.logMsg("Update");
 			lag -= us_per_update;
 		}
 
 		// render(lag / MS_PER_UPDATE)
-
+        logger.logMsg("Process Input");
 	}
 }
